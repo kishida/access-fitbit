@@ -6,8 +6,10 @@
 package kis.fitbit.sample;
 
 import java.awt.BasicStroke;
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -16,6 +18,7 @@ import java.time.temporal.ChronoField;
 import java.util.List;
 import java.util.stream.Stream;
 import javax.swing.ImageIcon;
+import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import kis.fitbit.mongo.FitbitMongo.MongoSleep;
@@ -31,18 +34,54 @@ public class DrawSleepGraph {
         LocalDateTime start;
         LocalDateTime end;
     }
-    
+    static FitbitService service;
     public static void main(String[] args) {
-        var service = new FitbitService();
-        var month = YearMonth.of(2018,8);
-        List<MongoSleep> sleeps = service.retrieveMonthSleeps("kishida", month);
+        service = new FitbitService();
+        YearMonth[] month = {YearMonth.of(2018,8)};
         final var width = 500;
         final var height = 700;
         var image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
         var g = image.createGraphics();
         g.setColor(Color.WHITE);
         g.fillRect(0, 0, width, height);
+
+        drawSleepGraph(g, month[0]);
+
+        // ウィンドウ
+        var f = new JFrame();
         
+        var l = new JLabel(new ImageIcon(image));
+        f.add(l);
+        
+        var lb = new JButton("<");
+        f.add(BorderLayout.WEST, lb);
+        lb.addActionListener(al -> {
+            g.setColor(Color.WHITE);
+            g.fillRect(0, 0, width, height);
+            month[0] = month[0].minusMonths(1);
+            drawSleepGraph(g, month[0]);
+            l.repaint();
+        });
+        
+        var rb = new JButton(">");
+        rb.addActionListener(al -> {
+            g.setColor(Color.WHITE);
+            g.fillRect(0, 0, width, height);
+            month[0] = month[0].plusMonths(1);
+            drawSleepGraph(g, month[0]);
+            l.repaint();
+        });
+        f.add(BorderLayout.EAST, rb);
+        
+        f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        f.setLocation(300, 300);
+        f.setSize(600, 750);
+        f.setVisible(true);
+    }
+    
+    private static void drawSleepGraph(Graphics2D g, YearMonth month) {
+        List<MongoSleep> sleeps = service.retrieveMonthSleeps("kishida", month);
+
         int yoffset = 25;
         
         // 日付
@@ -92,16 +131,5 @@ public class DrawSleepGraph {
                 .forEach(tr -> {
                     g.fillRoundRect(fn.getX(tr.getStart()), fn.getY(tr.getStart()), fn.getX(tr.getEnd()) - fn.getX(tr.getStart()), 8, 2, 2);
                 });
-        
-        // ウィンドウ
-        var f = new JFrame();
-        
-        var l = new JLabel(new ImageIcon(image));
-        f.add(l);
-        
-        f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        f.setLocation(300, 300);
-        f.setSize(550, 750);
-        f.setVisible(true);
     }
 }
