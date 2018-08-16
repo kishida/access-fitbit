@@ -27,11 +27,15 @@ public class AccessFitbit {
         //var data = conn.readData(USER_NAME);
         //Files.writeString(Path.of("step-range.json"), data);
         
-        var sl = conn.retrieveSleeps(USER_NAME, LocalDate.of(2018,4,1), LocalDate.of(2018,4,30));
+        var sl = conn.retrieveSleeps(USER_NAME, LocalDate.of(2018,8,16), LocalDate.of(2018,8,31));
         System.out.println(sl);
         
         try(var con = new FitbitMongo()) {
-            con.addSleeps("kishida", sl);
+            if (!sl.getSleep().isEmpty()) {
+                con.addSleeps("kishida", sl);
+            } else {
+                System.out.println("No data");
+            }
         }
         
         /*
